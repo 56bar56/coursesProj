@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "home": "בית",
+    "dashboard": "לוח בקרה",
+    "login": "התחברות",
+    "register": "הרשמה",
+    "logout": "התנתקות"
+  },
+  "home": {
+    "title": "למדו ממי שכבר עשה את זה",
+    "subtitle": "קורסים וליווי אישי בהכנה לפסיכומטרי, מתמטיקה וציור."
+  },
+  "auth": {
+    "emailLabel": "אימייל",
+    "passwordLabel": "סיסמה",
+    "displayNameLabel": "שם תצוגה",
+    "loginTitle": "התחברות",
+    "registerTitle": "יצירת חשבון",
+    "loginSubmit": "התחברות",
+    "registerSubmit": "הרשמה",
+    "noAccount": "אין לך חשבון?",
+    "haveAccount": "כבר יש לך חשבון?",
+    "invalidCredentials": "אימייל או סיסמה שגויים.",
+    "genericError": "משהו השתבש. נסו שוב."
+  },
+  "dashboard": {
+    "welcome": "שלום, {{name}}",
+    "email": "אימייל",
+    "roles": "תפקידים",
+    "emailVerified": "אימייל מאומת",
+    "yes": "כן",
+    "no": "לא"
+  }
+}

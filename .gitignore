@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+
+# env
+.env
+.env.local
+apps/api/.env
+apps/web/.env
+
+# prisma generated client
+apps/api/src/generated/
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# docker volumes (if bind-mounted locally)
+.docker-data/
+
+# test coverage
+coverage/

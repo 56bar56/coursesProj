@@ -33,6 +33,8 @@ model User {
 
   refreshTokens       RefreshToken[]
   verificationTokens  VerificationToken[]
+  coursesOwned        Course[]
+  enrollments         Enrollment[]
 
   @@map("users")
 }
@@ -62,4 +64,116 @@ model VerificationToken {
 
   @@index([userId, type])
   @@map("verification_tokens")
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LessonType {
+  VIDEO
+  TEXT
+  QUIZ
+  RESOURCE
+}
+
+model Course {
+  id          String       @id @default(uuid())
+  slug        String       @unique
+  title       String
+  description String       @db.Text
+  category    String
+  language    String       @default("en")
+  priceCents  Int          @default(0)
+  currency    String       @default("USD")
+  status      CourseStatus @default(DRAFT)
+
+  ownerInstructorId         String
+  ownerInstructor           User    @relation(fields: [ownerInstructorId], references: [id])
+  instructorRevenueShareBps Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modules     Module[]
+  enrollments Enrollment[]
+
+  @@index([status, category])
+  @@map("courses")
+}
+
+model Module {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons Lesson[]
+
+  @@index([courseId, order])
+  @@map("modules")
+}
+
+model Lesson {
+  id       String     @id @default(uuid())
+  moduleId String
+  module   Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  type     LessonType
+  title    String
+  order    Int
+
+  textContent String? @db.Text
+
+  storageKey  String?
+  fileName    String?
+  mimeType    String?
+  sizeBytes   Int?
+  durationSec Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessonProgress LessonProgress[]
+
+  @@index([moduleId, order])
+  @@map("lessons")
+}
+
+model Enrollment {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  purchaseId  String?   @unique
+  progressPct Int       @default(0)
+  completedAt DateTime?
+  enrolledAt  DateTime  @default(now())
+
+  lessonProgress LessonProgress[]
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("enrollments")
+}
+
+model LessonProgress {
+  id              String     @id @default(uuid())
+  enrollmentId    String
+  enrollment      Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonId        String
+  lesson          Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed       Boolean    @default(false)
+  completedAt     DateTime?
+  lastPositionSec Int?
+  updatedAt       DateTime   @updatedAt
+
+  @@unique([enrollmentId, lessonId])
+  @@index([lessonId])
+  @@map("lesson_progress")
 }

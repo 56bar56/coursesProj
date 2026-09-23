@@ -11,6 +11,9 @@ apps/web/.env
 # prisma generated client
 apps/api/src/generated/
 
+# local file storage stub (video/resource content for lessons)
+apps/api/local-uploads/
+
 # logs
 *.log
 npm-debug.log*

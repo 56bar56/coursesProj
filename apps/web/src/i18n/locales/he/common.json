@@ -1,6 +1,8 @@
 {
   "nav": {
     "home": "בית",
+    "courses": "קורסים",
+    "myCourses": "הקורסים שלי",
     "dashboard": "לוח בקרה",
     "login": "התחברות",
     "register": "הרשמה",
@@ -30,5 +32,31 @@
     "emailVerified": "אימייל מאומת",
     "yes": "כן",
     "no": "לא"
+  },
+  "courses": {
+    "catalogue": {
+      "title": "קורסים",
+      "searchPlaceholder": "חיפוש קורסים…",
+      "free": "חינם",
+      "empty": "לא נמצאו קורסים."
+    },
+    "detail": {
+      "enrollFree": "הרשמה חינם",
+      "continueLearning": "המשך למידה",
+      "lessonsCount": "{{count}} שיעורים"
+    },
+    "myCourses": {
+      "title": "הקורסים שלי",
+      "empty": "עדיין לא נרשמת לאף קורס.",
+      "progress": "{{percent}}% הושלם"
+    },
+    "player": {
+      "markComplete": "סמן כהושלם",
+      "completed": "הושלם",
+      "enrollToUnlock": "הירשמו לקורס כדי לפתוח שיעור זה.",
+      "enrollCta": "עבור לדף הקורס",
+      "quizComingSoon": "חידונים יגיעו בקרוב.",
+      "downloadResource": "הורדה"
+    }
   }
 }

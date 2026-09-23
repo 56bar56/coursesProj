@@ -1,6 +1,8 @@
 {
   "nav": {
     "home": "Home",
+    "courses": "Courses",
+    "myCourses": "My Courses",
     "dashboard": "Dashboard",
     "login": "Log in",
     "register": "Sign up",
@@ -30,5 +32,32 @@
     "emailVerified": "Email verified",
     "yes": "Yes",
     "no": "No"
+  },
+  "courses": {
+    "catalogue": {
+      "title": "Courses",
+      "searchPlaceholder": "Search courses…",
+      "free": "Free",
+      "empty": "No courses found."
+    },
+    "detail": {
+      "enrollFree": "Enroll for free",
+      "continueLearning": "Continue learning",
+      "lessonsCount": "{{count}} lesson",
+      "lessonsCount_other": "{{count}} lessons"
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "empty": "You haven't enrolled in any courses yet.",
+      "progress": "{{percent}}% complete"
+    },
+    "player": {
+      "markComplete": "Mark as complete",
+      "completed": "Completed",
+      "enrollToUnlock": "Enroll in this course to unlock this lesson.",
+      "enrollCta": "Go to course page",
+      "quizComingSoon": "Quizzes are coming soon.",
+      "downloadResource": "Download"
+    }
   }
 }

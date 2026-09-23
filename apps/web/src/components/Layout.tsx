@@ -15,10 +15,18 @@ export function Layout() {
           <Link to="/" className="font-semibold">
             {t('nav.home')}
           </Link>
+          <Link to="/courses" className="text-gray-600 hover:text-gray-900">
+            {t('nav.courses')}
+          </Link>
           {user && (
-            <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">
-              {t('nav.dashboard')}
-            </Link>
+            <>
+              <Link to="/my-courses" className="text-gray-600 hover:text-gray-900">
+                {t('nav.myCourses')}
+              </Link>
+              <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">
+                {t('nav.dashboard')}
+              </Link>
+            </>
           )}
         </nav>
         <div className="flex items-center gap-4">

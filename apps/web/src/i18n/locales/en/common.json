@@ -9,6 +9,8 @@
     "dashboard": "Dashboard",
     "instructorCourses": "My Teaching",
     "adminQueue": "Review Queue",
+    "adminUsers": "Users",
+    "adminMetrics": "Metrics",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out"
@@ -176,6 +178,34 @@
       "reject": "Reject",
       "reasonPlaceholder": "Explain why this course is being rejected…",
       "confirmReject": "Confirm rejection"
+    },
+    "users": {
+      "title": "Users",
+      "searchPlaceholder": "Search by name or email…",
+      "allRoles": "All roles",
+      "empty": "No users match your filters.",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "roles": "Roles",
+        "courses": "Courses owned",
+        "enrollments": "Enrollments"
+      },
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "Page {{page}} of {{totalPages}}"
+    },
+    "metrics": {
+      "title": "Platform metrics",
+      "totalUsers": "Total users",
+      "totalCourses": "Total courses",
+      "totalEnrollments": "Total enrollments",
+      "totalReviews": "Total reviews",
+      "totalBookings": "Total bookings",
+      "revenue": "Revenue (paid orders)",
+      "noRevenue": "No paid orders yet.",
+      "orderCount": "{{count}} order",
+      "orderCount_other": "{{count}} orders"
     }
   },
   "reviews": {

@@ -41,9 +41,17 @@ export function Layout() {
                 </Link>
               )}
               {user.roles.includes('ADMIN') && (
-                <Link to="/admin/courses" className="text-gray-600 hover:text-gray-900">
-                  {t('nav.adminQueue')}
-                </Link>
+                <>
+                  <Link to="/admin/courses" className="text-gray-600 hover:text-gray-900">
+                    {t('nav.adminQueue')}
+                  </Link>
+                  <Link to="/admin/users" className="text-gray-600 hover:text-gray-900">
+                    {t('nav.adminUsers')}
+                  </Link>
+                  <Link to="/admin/metrics" className="text-gray-600 hover:text-gray-900">
+                    {t('nav.adminMetrics')}
+                  </Link>
+                </>
               )}
             </>
           )}

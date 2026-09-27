@@ -11,13 +11,17 @@ is in the two docs at the repo root:
 
 This README covers what's actually built and how to run it.
 
-## Status: Step 6 of the build order — Reviews & the Instructor Marketplace
+## Status: Step 7 of the build order (partial) — Admin: Users & Metrics
 
 Auth/users/roles (Step 1), the course content system (Step 2), payments for
-paid courses (Step 3), the quiz engine (Step 4), mentor booking (Step 5), and
-now reviews plus a real instructor course-authoring + submission/approval
-workflow (Step 6) are built. Payouts/platform-metrics admin (Step 7 of the
-spec) do not exist yet.
+paid courses (Step 3), the quiz engine (Step 4), mentor booking (Step 5),
+reviews plus the instructor course-authoring + submission/approval workflow
+(Step 6), and now the rest of the admin surface — user management and
+platform metrics (Step 7) — are built. **Payouts are deliberately excluded**
+from this pass, per an explicit scope call: Step 7 in the spec is "Payouts
+and the admin dashboard," and only the admin-dashboard half was requested.
+There's no `Payout`/`InstructorProfile` model, no revenue-share computation,
+and no instructor earnings UI — that remains unbuilt.
 
 Instructor authoring in this step covers course metadata, modules, and
 **text** lessons only — this was a deliberate scope call, not an oversight.
@@ -121,8 +125,21 @@ screen.
   /api/admin/courses/pending`, `PATCH /api/admin/courses/:id/approve`, `PATCH
   /api/admin/courses/:id/reject` (with a required reason, shown back to the
   instructor), and `PATCH /api/admin/reviews/:id/hide` for review moderation.
-  This module is intentionally sized to just this need — Step 7's user
-  management/platform metrics will extend it rather than requiring a new one.
+- **Admin user management** (`GET /api/admin/users`, same module): paginated,
+  searchable (email/displayName, case-insensitive), filterable by role, each
+  row annotated with `_count` of owned courses and enrollments for at-a-glance
+  context. Role *editing* deliberately isn't duplicated here — it reuses the
+  admin-gated `PATCH /api/users/:id/roles` that's existed since Step 1
+  (`apps/api/src/users/`), which already refuses to leave a user with zero
+  roles (`@ArrayNotEmpty()`); this module's job is visibility, not another
+  copy of the mutation.
+- **Platform metrics** (`GET /api/admin/metrics`, same module): a snapshot of
+  current totals — users by role, courses by status, enrollment/review/
+  booking counts (reviews split out hidden vs visible, bookings by status),
+  and revenue grouped by currency from `PAID` orders only (summed rather than
+  blindly added across currencies, since `Order.currency` is a free string
+  field, not fixed to one). No time-series/trend data — a first pass at
+  totals, not a full analytics dashboard.
 - **Video/file storage stub**: no S3/R2 yet (see note below) — files sit on
   local disk and are served through short-lived, cryptographically signed
   URLs (`/api/storage/stream/:lessonId`, `/api/storage/download/:lessonId`),
@@ -156,6 +173,18 @@ screen.
 - Admin review queue (`/admin/courses`, role-gated) — approve or reject
   (with a reason) each pending submission, seeing its full module/lesson
   outline first.
+- Admin users (`/admin/users`, role-gated) — search, filter by role, and
+  paginate all users; each row has per-role checkboxes that mutate
+  immediately (same "commit on interaction" convention as the course editor's
+  autosave and the mentor booking flow's direct-click booking). Two UX-only
+  guardrails mirror server-side invariants rather than inventing new ones: an
+  admin can't uncheck a user's last remaining role (the server's
+  `@ArrayNotEmpty()` would reject it anyway), and an admin can't edit their
+  own row at all, so there's no accidental self-lockout from the very page
+  being used to manage access.
+- Admin metrics (`/admin/metrics`, role-gated) — plain stat cards (no
+  charting library; nothing else in this app charts anything) for user/
+  course/enrollment/review/booking counts and revenue by currency.
 - Reviews on the course detail page: average rating, the review list, and a
   review form that only renders once `useMyEnrollments()` confirms you're
   enrolled (the server re-checks regardless — this is a UX gate, not the
@@ -251,8 +280,9 @@ by any user. Log in as the seeded instructor to try the real authoring flow
 at `/instructor/courses` (create a course, add a module + text lesson,
 submit for review), then as the seeded admin to approve/reject it at
 `/admin/courses`. `Role.INSTRUCTOR`/`Role.ADMIN` are never self-service —
-they're only granted via the admin `PATCH /api/users/:id/roles` endpoint (or
-the seed script), same as `Role.MENTOR`.
+they're only granted via the admin `PATCH /api/users/:id/roles` endpoint,
+now with a UI at `/admin/users` (or the seed script), same as `Role.MENTOR`.
+`/admin/metrics` has a platform-wide numbers snapshot.
 
 The seed script also tries to download a small sample video for the seeded
 course's video lesson (so the player has something real to play/scrub). If
@@ -303,7 +333,8 @@ apps/
       instructor-courses/   instructor-owned course/module/text-lesson CRUD
                              + submit-for-review, distinct from courses/
       reviews/               rating+text reviews, upsert-on-create, soft-hide
-      admin/                 course-approval queue, review moderation
+      admin/                 course-approval queue, review moderation,
+                             user listing/search, platform metrics
       mail/                 nodemailer -> Mailpit
       prisma/                Prisma client wrapper (NestJS module)
       common/                RBAC guards/decorators, CSRF origin-check guard
@@ -318,14 +349,15 @@ apps/
       features/bookings/     mentor/availability/booking query hooks
       features/instructor-courses/  instructor course/module/lesson query hooks
       features/reviews/      review query hooks
-      features/admin/         approval-queue/review-moderation query hooks
+      features/admin/         approval-queue/user-management/metrics query hooks
       routes/               HomePage, DashboardPage, CourseCataloguePage,
                             CourseDetailPage, MyCoursesPage, LessonPlayerPage,
                             FakeCheckoutPage, OrderHistoryPage,
                             MentorListPage, MentorAvailabilityPage,
                             BookingHistoryPage, StubCallPage,
                             InstructorDashboardPage, CourseEditorPage,
-                            AdminCourseQueuePage, ProtectedRoute
+                            AdminCourseQueuePage, AdminUsersPage,
+                            AdminMetricsPage, ProtectedRoute
       i18n/                 en/he translation bundles
       lib/                  API client (cookie-based, auto-refresh on 401)
 docker-compose.yml           Postgres + Mailpit for local dev
@@ -344,8 +376,9 @@ docker-compose.yml           Postgres + Mailpit for local dev
 
 ## What's next
 
-Following the spec's build order: payouts and the rest of the admin surface
-(user management, platform metrics) — Step 7. Real object storage for
+Payouts — the other half of Step 7 (`Payout`/`InstructorProfile` schema,
+revenue-share computation, admin payout runs, instructor earnings UI) —
+deliberately excluded from this pass. Real object storage for
 instructor-uploaded video/resources, video/quiz authoring UI, a real payment
 provider, and a real video-call provider all remain intentionally deferred
 until there's a concrete need driving each one.

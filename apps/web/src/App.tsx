@@ -20,6 +20,8 @@ import { StubCallPage } from './routes/StubCallPage';
 import { InstructorDashboardPage } from './routes/InstructorDashboardPage';
 import { CourseEditorPage } from './routes/CourseEditorPage';
 import { AdminCourseQueuePage } from './routes/AdminCourseQueuePage';
+import { AdminUsersPage } from './routes/AdminUsersPage';
+import { AdminMetricsPage } from './routes/AdminMetricsPage';
 import { RTL_LOCALES } from './i18n/i18n';
 
 export function App() {
@@ -63,6 +65,8 @@ export function App() {
           </Route>
           <Route element={<ProtectedRoute role="ADMIN" />}>
             <Route path="admin/courses" element={<AdminCourseQueuePage />} />
+            <Route path="admin/users" element={<AdminUsersPage />} />
+            <Route path="admin/metrics" element={<AdminMetricsPage />} />
           </Route>
         </Route>
       </Routes>

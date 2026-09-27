@@ -9,6 +9,8 @@
     "dashboard": "לוח בקרה",
     "instructorCourses": "ההוראה שלי",
     "adminQueue": "תור אישורים",
+    "adminUsers": "משתמשים",
+    "adminMetrics": "מדדים",
     "login": "התחברות",
     "register": "הרשמה",
     "logout": "התנתקות"
@@ -173,6 +175,33 @@
       "reject": "דחייה",
       "reasonPlaceholder": "נמקו מדוע הקורס נדחה…",
       "confirmReject": "אישור דחייה"
+    },
+    "users": {
+      "title": "משתמשים",
+      "searchPlaceholder": "חיפוש לפי שם או אימייל…",
+      "allRoles": "כל התפקידים",
+      "empty": "אין משתמשים התואמים לסינון.",
+      "columns": {
+        "name": "שם",
+        "email": "אימייל",
+        "roles": "תפקידים",
+        "courses": "קורסים בבעלות",
+        "enrollments": "רישומים"
+      },
+      "prev": "הקודם",
+      "next": "הבא",
+      "pageOf": "עמוד {{page}} מתוך {{totalPages}}"
+    },
+    "metrics": {
+      "title": "מדדי פלטפורמה",
+      "totalUsers": "סה\"כ משתמשים",
+      "totalCourses": "סה\"כ קורסים",
+      "totalEnrollments": "סה\"כ רישומים",
+      "totalReviews": "סה\"כ חוות דעת",
+      "totalBookings": "סה\"כ פגישות",
+      "revenue": "הכנסות (הזמנות ששולמו)",
+      "noRevenue": "אין עדיין הזמנות ששולמו.",
+      "orderCount": "{{count}} הזמנות"
     }
   },
   "reviews": {

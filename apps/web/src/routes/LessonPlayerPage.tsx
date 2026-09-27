@@ -9,6 +9,7 @@ import {
   useMarkLessonComplete,
   useUpdateLessonPosition,
 } from '../features/courses/hooks';
+import { QuizSection } from '../features/quizzes/QuizSection';
 
 const POSITION_REPORT_INTERVAL_SEC = 10;
 
@@ -104,17 +105,25 @@ export function LessonPlayerPage() {
             </a>
           )}
 
-          {lesson.type === 'QUIZ' && <p className="text-gray-500">{t('courses.player.quizComingSoon')}</p>}
+          {lesson.type === 'QUIZ' && 'quizId' in lesson && (
+            <QuizSection quizId={lesson.quizId} timeLimitSec={lesson.timeLimitSec} questionCount={lesson.questionCount} />
+          )}
+
+          {lesson.type === 'QUIZ' && 'comingSoon' in lesson && (
+            <p className="text-gray-500">{t('courses.player.quizComingSoon')}</p>
+          )}
         </div>
 
-        <button
-          type="button"
-          disabled={isCompleted || markComplete.isPending}
-          onClick={() => lessonId && markComplete.mutate(lessonId)}
-          className="mt-6 rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
-        >
-          {isCompleted ? t('courses.player.completed') : t('courses.player.markComplete')}
-        </button>
+        {!(lesson.type === 'QUIZ' && 'quizId' in lesson) && (
+          <button
+            type="button"
+            disabled={isCompleted || markComplete.isPending}
+            onClick={() => lessonId && markComplete.mutate(lessonId)}
+            className="mt-6 rounded-md bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
+          >
+            {isCompleted ? t('courses.player.completed') : t('courses.player.markComplete')}
+          </button>
+        )}
       </main>
     </div>
   );

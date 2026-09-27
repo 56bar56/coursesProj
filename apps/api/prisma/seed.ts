@@ -82,7 +82,7 @@ function writeSampleResource(): { fileName: string; sizeBytes: number } {
   return { fileName, sizeBytes: Buffer.byteLength(content, 'utf-8') };
 }
 
-async function seedCourse(instructorId: string) {
+async function seedFreeCourse(instructorId: string) {
   const slug = 'intro-to-university-math';
   const existing = await prisma.course.findUnique({ where: { slug } });
   if (existing) {
@@ -158,8 +158,40 @@ async function seedCourse(instructorId: string) {
                 },
                 {
                   type: LessonType.QUIZ,
-                  title: 'Check your understanding (coming soon)',
+                  title: 'Check your understanding',
                   order: 30,
+                  quiz: {
+                    create: {
+                      questions: {
+                        create: [
+                          {
+                            order: 10,
+                            type: 'MULTIPLE_CHOICE',
+                            text: 'What is the slope of the line y = 2x + 3?',
+                            options: ['1', '2', '3', '-2'],
+                            correctOptionIndex: 1,
+                            explanation: 'The slope is the coefficient of x, which is 2.',
+                          },
+                          {
+                            order: 20,
+                            type: 'NUMERIC_ENTRY',
+                            text: 'What is f(4) if f(x) = x^2 - 1?',
+                            options: [],
+                            correctNumericAnswer: '15',
+                            explanation: 'f(4) = 4^2 - 1 = 16 - 1 = 15.',
+                          },
+                          {
+                            order: 30,
+                            type: 'MULTIPLE_CHOICE',
+                            text: 'Which of these is a quadratic function?',
+                            options: ['y = 2x + 1', 'y = x^2 + 1', 'y = 1/x', 'y = 3'],
+                            correctOptionIndex: 1,
+                            explanation: 'A quadratic function has an x^2 term.',
+                          },
+                        ],
+                      },
+                    },
+                  },
                 },
               ],
             },
@@ -170,6 +202,109 @@ async function seedCourse(instructorId: string) {
   });
 
   console.log(`Seeded course: ${slug}`);
+}
+
+async function seedPaidCourse(instructorId: string) {
+  const slug = 'psychometric-verbal-crash-course';
+  const existing = await prisma.course.findUnique({ where: { slug } });
+  if (existing) {
+    console.log(`Course "${slug}" already exists, skipping.`);
+    return;
+  }
+
+  await prisma.course.create({
+    data: {
+      slug,
+      title: 'Psychometric Verbal Crash Course',
+      description:
+        'A focused, paid crash course on the verbal reasoning section of the psychometric exam, ' +
+        'covering strategy and worked examples.',
+      category: 'psychometric',
+      language: 'en',
+      priceCents: 4900,
+      currency: 'USD',
+      status: CourseStatus.PUBLISHED,
+      ownerInstructorId: instructorId,
+      modules: {
+        create: [
+          {
+            title: 'Verbal Reasoning Basics',
+            order: 10,
+            lessons: {
+              create: [
+                {
+                  type: LessonType.TEXT,
+                  title: 'How the verbal section is scored',
+                  order: 10,
+                  textContent:
+                    'The verbal section tests analogies, sentence completion, and reading comprehension. ' +
+                    'This crash course focuses on the patterns that come up most often.',
+                },
+                {
+                  type: LessonType.QUIZ,
+                  title: 'Timed practice set',
+                  order: 20,
+                  quiz: {
+                    create: {
+                      timeLimitSec: 300,
+                      questions: {
+                        create: [
+                          {
+                            order: 10,
+                            type: 'MULTIPLE_CHOICE',
+                            text: 'BOOK is to READ as KNIFE is to ___',
+                            options: ['Cook', 'Cut', 'Sharpen', 'Kitchen'],
+                            correctOptionIndex: 1,
+                            explanation:
+                              'A book is used to read; a knife is used to cut. The relationship is object-to-primary-function.',
+                          },
+                          {
+                            order: 20,
+                            type: 'MULTIPLE_CHOICE',
+                            text:
+                              'Choose the word that best completes the sentence: The lecture was so ___ that half the class fell asleep.',
+                            options: ['engaging', 'tedious', 'brief', 'controversial'],
+                            correctOptionIndex: 1,
+                            explanation: '"Tedious" (boring) best explains why students fell asleep.',
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  console.log(`Seeded course: ${slug}`);
+}
+
+async function seedMentorAvailability(mentorId: string) {
+  const existing = await prisma.mentorAvailability.findFirst({ where: { mentorId } });
+  if (existing) {
+    console.log('Mentor availability already seeded, skipping.');
+    return;
+  }
+
+  const slots = [];
+  const now = new Date();
+  for (let day = 1; day <= 10; day++) {
+    // Two 30-minute slots per day, mid-morning and mid-afternoon, over the next 10 days.
+    for (const hour of [10, 15]) {
+      const startAt = new Date(now);
+      startAt.setDate(startAt.getDate() + day);
+      startAt.setHours(hour, 0, 0, 0);
+      const endAt = new Date(startAt.getTime() + 30 * 60 * 1000);
+      slots.push({ mentorId, startAt, endAt, priceCents: 6000, currency: 'USD' });
+    }
+  }
+
+  await prisma.mentorAvailability.createMany({ data: slots });
+  console.log(`Seeded ${slots.length} mentor availability slots.`);
 }
 
 async function main() {
@@ -183,9 +318,23 @@ async function main() {
   );
 
   if (instructorId) {
-    await seedCourse(instructorId);
+    await seedFreeCourse(instructorId);
+    await seedPaidCourse(instructorId);
   } else {
     console.log('No instructor seeded, skipping course seed (Course.ownerInstructorId is required).');
+  }
+
+  const mentorId = await seedUser(
+    process.env.SEED_MENTOR_EMAIL,
+    process.env.SEED_MENTOR_PASSWORD,
+    'Mentor',
+    [Role.MENTOR],
+  );
+
+  if (mentorId) {
+    await seedMentorAvailability(mentorId);
+  } else {
+    console.log('No mentor seeded, skipping availability seed.');
   }
 }
 

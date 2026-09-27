@@ -5,11 +5,12 @@ describe('LessonsService', () => {
   const courseId = 'course-1';
   const enrollment = { id: 'enrollment-1', userId: 'user-1', courseId };
 
-  function buildService(lesson: any, enrollmentRow: any = enrollment, progress: any = null) {
+  function buildService(lesson: any, enrollmentRow: any = enrollment, progress: any = null, quiz: any = null) {
     const prisma = {
       lesson: { findUnique: jest.fn().mockResolvedValue(lesson) },
       enrollment: { findUnique: jest.fn().mockResolvedValue(enrollmentRow) },
       lessonProgress: { findUnique: jest.fn().mockResolvedValue(progress) },
+      quiz: { findUnique: jest.fn().mockResolvedValue(quiz) },
     };
     const signedUrl = { sign: jest.fn().mockReturnValue('signed-token') };
     return { service: new LessonsService(prisma as any, signedUrl as any), prisma, signedUrl };
@@ -66,10 +67,19 @@ describe('LessonsService', () => {
     expect(result).toMatchObject({ type: 'RESOURCE', fileName: 'sheet.txt' });
   });
 
-  it('returns a comingSoon placeholder for a QUIZ lesson', async () => {
+  it('returns a comingSoon placeholder for a QUIZ lesson with no quiz row yet', async () => {
     const lesson = { id: 'lesson-1', type: 'QUIZ', title: 'x', module: { courseId } };
     const { service } = buildService(lesson);
     const result = await service.getLesson('lesson-1', 'user-1');
     expect(result).toMatchObject({ type: 'QUIZ', comingSoon: true });
+  });
+
+  it('returns quiz metadata without questions for a QUIZ lesson that has a quiz', async () => {
+    const lesson = { id: 'lesson-1', type: 'QUIZ', title: 'x', module: { courseId } };
+    const quiz = { id: 'quiz-1', timeLimitSec: 60, _count: { questions: 3 } };
+    const { service } = buildService(lesson, enrollment, null, quiz);
+    const result = await service.getLesson('lesson-1', 'user-1');
+    expect(result).toMatchObject({ type: 'QUIZ', quizId: 'quiz-1', timeLimitSec: 60, questionCount: 3 });
+    expect(result).not.toHaveProperty('comingSoon');
   });
 });

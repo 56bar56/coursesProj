@@ -21,10 +21,15 @@ export const envSchema = z.object({
   SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
   SEED_INSTRUCTOR_EMAIL: z.email().optional(),
   SEED_INSTRUCTOR_PASSWORD: z.string().min(8).optional(),
+  SEED_MENTOR_EMAIL: z.email().optional(),
+  SEED_MENTOR_PASSWORD: z.string().min(8).optional(),
 
   STORAGE_SIGNING_SECRET: z.string().min(16, 'STORAGE_SIGNING_SECRET must be at least 16 characters'),
   LOCAL_STORAGE_DIR: z.string().min(1).default('./local-uploads'),
   SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+
+  PAYMENT_PROVIDER: z.enum(['fake']).default('fake'),
+  PAYMENTS_FAKE_WEBHOOK_SECRET: z.string().min(16, 'PAYMENTS_FAKE_WEBHOOK_SECRET must be at least 16 characters'),
 });
 
 export type Env = z.infer<typeof envSchema>;

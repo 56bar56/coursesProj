@@ -11,13 +11,21 @@ is in the two docs at the repo root:
 
 This README covers what's actually built and how to run it.
 
-## Status: Step 2 of the build order — Courses, Lessons, Progress
+## Status: Step 6 of the build order — Reviews & the Instructor Marketplace
 
-Auth/users/roles (Step 1) plus the course content system (Step 2) are built.
-Payments, the quiz engine, mentor bookings, the instructor marketplace, and
-payouts/admin (Steps 3–7 of the spec) do not exist yet. There is also no
-instructor-authoring UI yet — the one course in the system is seeded, not
-created through a screen (that's Step 6 per the spec).
+Auth/users/roles (Step 1), the course content system (Step 2), payments for
+paid courses (Step 3), the quiz engine (Step 4), mentor booking (Step 5), and
+now reviews plus a real instructor course-authoring + submission/approval
+workflow (Step 6) are built. Payouts/platform-metrics admin (Step 7 of the
+spec) do not exist yet.
+
+Instructor authoring in this step covers course metadata, modules, and
+**text** lessons only — this was a deliberate scope call, not an oversight.
+Video upload, downloadable resources, and quiz authoring stay seed-only for
+now; an instructor can still submit a real course end-to-end using text
+lessons alone, and the submission/approval workflow itself is fully real.
+Mentor availability slots are also still seeded, not authored through a
+screen.
 
 ### What works right now
 
@@ -37,14 +45,84 @@ created through a screen (that's Step 6 per the spec).
 - **Course catalogue**: public browse/search (`GET /api/courses`) and course
   detail with a modules/lessons outline (`GET /api/courses/:slug`).
 - **Free enrollment**: `POST /api/enrollments`, `GET /api/enrollments/me`.
-  Paid enrollment (Step 3) isn't wired up — enrolling in a priced course is
-  rejected for now.
+- **Paid enrollment / payments**: `POST /api/payments/checkout` creates an
+  `Order` and a checkout session; `POST /api/payments/webhook` (self-verifying
+  via a signed request, not behind auth — this is what a real payment
+  provider calls) confirms it and creates the enrollment; `GET
+  /api/payments/orders` is order history. The order-confirmation logic is
+  idempotent under concurrent/duplicate calls (an atomic conditional update,
+  not a naive read-then-write) since real providers redeliver webhooks and
+  duplicate processing would mean duplicate enrollments/receipt emails.
+  A receipt email goes out via Mailpit on successful payment.
 - **Lesson content**, gated by enrollment (`GET /api/lessons/:id`): plain text
   for text lessons, a signed streaming URL for video, a signed download URL
-  for downloadable resources, and a "coming soon" placeholder for quiz
-  lessons (the real quiz engine is Step 4).
+  for downloadable resources, and quiz metadata (question count, time limit)
+  for quiz lessons.
+- **Quiz engine** (`apps/api/src/quizzes/`): multiple-choice and numeric-entry
+  questions; `POST /api/quizzes/:quizId/attempts` starts an attempt or
+  **resumes** an already-open one rather than creating duplicates (so a
+  refresh mid-quiz doesn't lose progress); `POST
+  /api/quizzes/attempts/:id/submit` scores it **entirely server-side** —
+  correct answers/explanations are never sent to the client before
+  submission — and returns a full score report with per-question
+  explanations; `GET /api/quizzes/:quizId/attempts` is past-attempt history.
+  Scoring is real-world tolerant (numeric answers like `"3"` and `"3.0"` are
+  treated as equal, not compared as raw strings). Timing is
+  server-authoritative: a `timeLimitSec` quiz flags late submissions using
+  the server's own `startedAt` timestamp, never a client-reported elapsed
+  time — late attempts are still scored, just flagged. Submitting an attempt
+  drives the same lesson-progress system as every other lesson type.
+  Double-submission (a double-clicked button, or a redelivered request) is
+  handled atomically so it can never create duplicate answer rows or fire
+  progress-completion twice.
 - **Progress tracking**: mark a lesson complete, resume position for video,
   and a per-course progress summary, all gated the same way.
+- **Mentor booking** (`apps/api/src/bookings/`, `apps/api/src/mentors/`):
+  `GET /api/mentors` and `GET /api/mentors/:id/availability` are public;
+  `POST /api/bookings` atomically claims a slot (`MentorAvailability.status`
+  flips `OPEN → BOOKED` via the same conditional-update idiom used for
+  payments/quiz idempotency — this is a genuine DB-level lock, not an
+  app-level check-then-write, so two students can never win the same slot).
+  Payment reuses the existing `Order`/`PaymentProvider` machinery from Step 3
+  (`POST /api/payments/booking-checkout`) — `Order.courseId` is now nullable
+  with a new `Order.bookingId`, and the webhook handler branches on which is
+  set. On successful payment, a booking gets a video-call join link (see
+  below) and a calendar invite emailed as a real `.ics` attachment via
+  Mailpit; `GET /api/bookings/:id/ics` also offers it as a direct download.
+  A failed payment or a `POST /api/bookings/:id/cancel` frees the slot for
+  someone else to book — this was caught and fixed via live testing: the
+  first schema draft made `Booking.slotId` a hard-unique 1:1 relation, which
+  actually made a freed slot un-rebookable (a second booking attempt 500'd
+  on the unique constraint, since double-booking prevention already lives in
+  `MentorAvailability.status`, not that constraint).
+- **Instructor course authoring** (`apps/api/src/instructor-courses/`, distinct
+  from the public read-only `CoursesModule`): `POST/GET/PATCH/DELETE
+  /api/instructor/courses(/:id)` plus nested module/lesson CRUD
+  (`.../modules(/:moduleId)`, `.../modules/:moduleId/lessons(/:lessonId)`),
+  all ownership-checked (404, not 403, on someone else's course — same
+  existence-hiding convention used everywhere else). A course is a state
+  machine: `DRAFT ⇄ edit`, `DRAFT/REJECTED --submit--> PENDING_REVIEW` (blocked
+  with 400 until it has at least one lesson), `PENDING_REVIEW
+  --admin approve/reject--> PUBLISHED/REJECTED`. Editing is locked outside
+  `DRAFT`/`REJECTED` (409) so a course can't be changed after submission
+  without going back through review; deleting is likewise only allowed in
+  those two statuses. Slugs auto-generate from the title with a numeric-suffix
+  fallback on collision. `Course.category` is a fixed allowlist shared by the
+  DTO and the frontend `<select>` (not a Prisma enum) so instructor input
+  can't fragment the catalogue's exact-match category filter.
+- **Reviews** (`apps/api/src/reviews/`): `GET/POST /api/courses/:courseId/reviews`.
+  Posting is an upsert keyed on `(userId, courseId)` — resubmitting just edits
+  your existing review rather than erroring or duplicating — gated on a
+  verified `Enrollment` row (same check `LessonsService` already used).
+  Moderation is a soft `hidden` flag, never a hard delete, matching how this
+  codebase treats every other record. The list endpoint also returns the
+  average rating.
+- **Admin course-approval queue** (`apps/api/src/admin/`): `GET
+  /api/admin/courses/pending`, `PATCH /api/admin/courses/:id/approve`, `PATCH
+  /api/admin/courses/:id/reject` (with a required reason, shown back to the
+  instructor), and `PATCH /api/admin/reviews/:id/hide` for review moderation.
+  This module is intentionally sized to just this need — Step 7's user
+  management/platform metrics will extend it rather than requiring a new one.
 - **Video/file storage stub**: no S3/R2 yet (see note below) — files sit on
   local disk and are served through short-lived, cryptographically signed
   URLs (`/api/storage/stream/:lessonId`, `/api/storage/download/:lessonId`),
@@ -54,9 +132,36 @@ created through a screen (that's Step 6 per the spec).
 
 **Frontend** (`apps/web` — React 19 + Vite + Tailwind v4)
 - Login, register, and a basic dashboard page showing the logged-in user.
-- Course catalogue, course detail (with an "enroll for free" flow), "My
-  Courses" with progress bars, and a lesson player (video/text/resource/quiz
-  rendering, mark-complete, resume position).
+- Course catalogue, course detail (with "enroll for free" or "Buy for $X"
+  depending on the course), "My Courses" with progress bars, and a lesson
+  player (video/text/resource rendering, mark-complete, resume position).
+- Quiz-taking UI inside the lesson player: an intro screen (time limit,
+  question count, past attempts), the timed question flow itself (a
+  self-correcting countdown computed from a fixed deadline, not a naive
+  decrementing timer that drifts on tab-throttling or refresh), and a score
+  report with per-question correct/incorrect + explanations.
+- A fake checkout page (`/checkout/fake/:orderId`) with "simulate successful
+  payment" / "simulate failed payment" buttons, and an order history page
+  (`/orders`) — see the payment-provider note below for why this exists.
+- Mentor browsing/booking: `/mentors` (list), `/mentors/:id` (availability,
+  grouped by day, "Book" goes through the same fake-checkout flow as course
+  purchases), `/bookings` (history — join-call link, "add to calendar"
+  download, cancel). `/call/stub/:bookingId` is a placeholder page for the
+  generated video link (see the video-provider note below).
+- Instructor dashboard (`/instructor/courses`, role-gated) — create a course,
+  see all of your own courses across every status, and a per-course editor
+  (`/instructor/courses/:id`) for metadata, modules, and text lessons, with a
+  rejection-reason banner and "Submit for review" — read-only once
+  `PENDING_REVIEW`/`PUBLISHED`, matching the backend's edit-lock.
+- Admin review queue (`/admin/courses`, role-gated) — approve or reject
+  (with a reason) each pending submission, seeing its full module/lesson
+  outline first.
+- Reviews on the course detail page: average rating, the review list, and a
+  review form that only renders once `useMyEnrollments()` confirms you're
+  enrolled (the server re-checks regardless — this is a UX gate, not the
+  security boundary).
+- `ProtectedRoute` now takes an optional `role` prop for role-gated routes,
+  on top of its existing login check.
 - Full English/Hebrew i18n with automatic RTL layout switching (via the
   language toggle in the header) — this was built in from the start, not
   bolted on later.
@@ -72,6 +177,25 @@ object-storage container, video/resource files are just served from local
 disk behind self-signed URLs (see above). The API contract (a lesson returns
 a content URL) won't need to change when real S3/R2 is eventually wired up
 for instructor uploads.
+
+Note on the payment stub: there's no way to self-host a fake Stripe the way
+Mailpit self-hosts SMTP, and no Stripe account exists yet — so payments are
+built behind a `PaymentProvider` interface (`apps/api/src/payments/providers/`)
+with a `FakePaymentProvider` that simulates the checkout+webhook lifecycle
+entirely within the app (the "fake checkout" page's Simulate buttons). The
+real `/api/payments/webhook` endpoint is still fully implemented with genuine
+HMAC signature verification over the raw request body — it's just never hit
+by the app's own UI, only by a manual signed request during testing — so
+swapping in real Stripe later means implementing one more class against the
+same interface, not a rewrite.
+
+Note on the video-call stub: same reasoning again — no Zoom/Google Meet
+account exists yet, so `apps/api/src/bookings/providers/video-call-provider.interface.ts`
+defines the seam and `StubVideoCallProvider` returns a placeholder join URL
+under this app's own domain. The calendar invite is *not* stubbed — an
+`.ics` file is plain text (RFC 5545) and needs no external account, so
+`apps/api/src/bookings/ics-builder.ts` generates a real one, attached to the
+confirmation email via nodemailer and downloadable directly from the API.
 
 ## Prerequisites
 
@@ -115,9 +239,20 @@ The seeded admin login is whatever you set `SEED_ADMIN_EMAIL` /
 `SEED_ADMIN_PASSWORD` to in `apps/api/.env` (defaults to
 `admin@courses.local` / `ChangeMe123!`). Likewise `SEED_INSTRUCTOR_EMAIL` /
 `SEED_INSTRUCTOR_PASSWORD` (default `instructor@courses.local` /
-`ChangeMe123!`) seeds the instructor account that owns the one seeded free
-course ("Intro to University Math", browsable at `/courses` once you're
-logged in as any user — including a fresh one you register yourself).
+`ChangeMe123!`) seeds the instructor account that owns the two seeded
+courses — a free one ("Intro to University Math") and a paid one
+("Psychometric Verbal Crash Course", $49) — both browsable at `/courses`
+once you're logged in as any user, including a fresh one you register
+yourself. Use the paid course to try the buy → fake-checkout → order-history
+flow. `SEED_MENTOR_EMAIL`/`SEED_MENTOR_PASSWORD` (default
+`mentor@courses.local` / `ChangeMe123!`) seeds a mentor with 20 bookable
+30-minute slots over the next 10 days ($60 each) — browsable at `/mentors`
+by any user. Log in as the seeded instructor to try the real authoring flow
+at `/instructor/courses` (create a course, add a module + text lesson,
+submit for review), then as the seeded admin to approve/reject it at
+`/admin/courses`. `Role.INSTRUCTOR`/`Role.ADMIN` are never self-service —
+they're only granted via the admin `PATCH /api/users/:id/roles` endpoint (or
+the seed script), same as `Role.MENTOR`.
 
 The seed script also tries to download a small sample video for the seeded
 course's video lesson (so the player has something real to play/scrub). If
@@ -143,7 +278,9 @@ change the port mapping in `docker-compose.yml` and the port in
 apps/
   api/    NestJS backend
     prisma/schema.prisma   User/RefreshToken/VerificationToken +
-                           Course/Module/Lesson/Enrollment/LessonProgress
+                           Course/Module/Lesson/Enrollment/LessonProgress +
+                           Order + Quiz/Question/Attempt/AttemptAnswer +
+                           MentorAvailability/Booking + Review
     local-uploads/          video/resource files for the storage stub (gitignored)
     src/
       auth/                register, login, refresh, logout, verify-email,
@@ -155,6 +292,18 @@ apps/
       progress/              mark-complete, resume position, progress summary
       storage/               self-signed URLs + local-disk file streaming
                              (Range-request support for video seeking)
+      payments/              Order model, PaymentProvider interface +
+                             FakePaymentProvider, checkout/webhook/orders
+      quizzes/               attempts (start/resume, submit, history),
+                             server-side scoring with numeric tolerance
+      bookings/              slot-claim + booking lifecycle, VideoCallProvider
+                             interface + stub, ics-builder.ts
+      mentors/               public mentor/availability listing + mentor's
+                             own read-only availability/bookings
+      instructor-courses/   instructor-owned course/module/text-lesson CRUD
+                             + submit-for-review, distinct from courses/
+      reviews/               rating+text reviews, upsert-on-create, soft-hide
+      admin/                 course-approval queue, review moderation
       mail/                 nodemailer -> Mailpit
       prisma/                Prisma client wrapper (NestJS module)
       common/                RBAC guards/decorators, CSRF origin-check guard
@@ -162,9 +311,21 @@ apps/
     src/
       features/auth/       login/register pages, auth query hooks
       features/courses/     course/enrollment/lesson/progress query hooks
+      features/payments/    checkout/order query hooks
+      features/quizzes/     QuizSection/QuizIntro/QuizPlayer/ScoreReport,
+                            attempt query hooks (mounted inside the lesson
+                            player, no dedicated route)
+      features/bookings/     mentor/availability/booking query hooks
+      features/instructor-courses/  instructor course/module/lesson query hooks
+      features/reviews/      review query hooks
+      features/admin/         approval-queue/review-moderation query hooks
       routes/               HomePage, DashboardPage, CourseCataloguePage,
                             CourseDetailPage, MyCoursesPage, LessonPlayerPage,
-                            ProtectedRoute
+                            FakeCheckoutPage, OrderHistoryPage,
+                            MentorListPage, MentorAvailabilityPage,
+                            BookingHistoryPage, StubCallPage,
+                            InstructorDashboardPage, CourseEditorPage,
+                            AdminCourseQueuePage, ProtectedRoute
       i18n/                 en/he translation bundles
       lib/                  API client (cookie-based, auto-refresh on 401)
 docker-compose.yml           Postgres + Mailpit for local dev
@@ -177,14 +338,14 @@ docker-compose.yml           Postgres + Mailpit for local dev
 | `npm run dev` | Runs both API and web dev servers concurrently |
 | `npm run docker:up` / `docker:down` | Start/stop Postgres + Mailpit |
 | `npm run prisma:migrate` | Apply schema migrations (dev) |
-| `npm run prisma:seed` | Seed the admin/instructor users + one free course |
+| `npm run prisma:seed` | Seed admin/instructor/mentor users, one free and one paid course (each with a real quiz), and 20 mentor availability slots |
 | `npm run prisma:studio` | Open Prisma Studio to browse the DB |
 | `npm run test:api` | Run backend unit tests |
 
 ## What's next
 
-Following the spec's build order: payments + paid enrollment, then the quiz
-engine (timed attempts — the real differentiator per the business plan),
-then mentor availability/booking, then reviews and the instructor
-marketplace (this is when a real course-authoring UI and real object storage
-for instructor-uploaded video would make sense), then payouts/admin.
+Following the spec's build order: payouts and the rest of the admin surface
+(user management, platform metrics) — Step 7. Real object storage for
+instructor-uploaded video/resources, video/quiz authoring UI, a real payment
+provider, and a real video-call provider all remain intentionally deferred
+until there's a concrete need driving each one.

@@ -3,7 +3,12 @@
     "home": "בית",
     "courses": "קורסים",
     "myCourses": "הקורסים שלי",
+    "mentors": "מנטורים",
+    "bookings": "פגישות",
+    "orders": "הזמנות",
     "dashboard": "לוח בקרה",
+    "instructorCourses": "ההוראה שלי",
+    "adminQueue": "תור אישורים",
     "login": "התחברות",
     "register": "הרשמה",
     "logout": "התנתקות"
@@ -56,7 +61,126 @@
       "enrollToUnlock": "הירשמו לקורס כדי לפתוח שיעור זה.",
       "enrollCta": "עבור לדף הקורס",
       "quizComingSoon": "חידונים יגיעו בקרוב.",
-      "downloadResource": "הורדה"
+      "downloadResource": "הורדה",
+      "quiz": {
+        "questionCount": "{{count}} שאלות",
+        "timeLimit": "מגבלת זמן: {{minutes}} דקות",
+        "start": "התחלת המבחן",
+        "startError": "לא הצלחנו להתחיל את המבחן. נסו שוב.",
+        "submit": "שליחה",
+        "timeRemaining": "זמן שנותר: {{time}}",
+        "pastAttempts": "ניסיונות קודמים",
+        "score": "{{percent}}%",
+        "late": "באיחור",
+        "lateSubmission": "המבחן הוגש לאחר תום הזמן.",
+        "correct": "נכון",
+        "incorrect": "שגוי",
+        "yourAnswer": "התשובה שלך"
+      }
     }
+  },
+  "payments": {
+    "buyFor": "קנייה עבור {{price}}",
+    "checkoutError": "לא הצלחנו להתחיל את התשלום. נסו שוב.",
+    "checkout": {
+      "title": "תשלום",
+      "description": "זהו תשלום מדומה לצורכי פיתוח מקומי — עדיין לא מחובר ספק תשלומים אמיתי.",
+      "simulateSuccess": "דמה תשלום מוצלח",
+      "simulateFailure": "דמה תשלום שנכשל",
+      "simulateError": "לא הצלחנו לעבד את ההזמנה. נסו שוב."
+    },
+    "orders": {
+      "title": "הזמנות",
+      "empty": "עדיין לא רכשת קורסים.",
+      "status": {
+        "PENDING": "בהמתנה",
+        "PAID": "שולם",
+        "FAILED": "נכשל",
+        "CANCELLED": "בוטל"
+      }
+    }
+  },
+  "bookings": {
+    "bookError": "לא הצלחנו להתחיל תשלום עבור הפגישה. נסו שוב.",
+    "slotUnavailable": "המשבצת הזו כבר לא פנויה. בחרו משבצת אחרת.",
+    "checkout": {
+      "title": "ייעוץ עם {{mentorName}}"
+    },
+    "mentorList": {
+      "title": "מנטורים",
+      "empty": "אין מנטורים זמינים כרגע."
+    },
+    "availability": {
+      "title": "קביעת פגישת ייעוץ",
+      "empty": "למנטור הזה אין משבצות פנויות כרגע."
+    },
+    "history": {
+      "title": "פגישות",
+      "empty": "עדיין לא קבעת פגישות ייעוץ.",
+      "joinCall": "הצטרפות לשיחה",
+      "addToCalendar": "הוספה ליומן",
+      "cancel": "ביטול",
+      "status": {
+        "PENDING_PAYMENT": "ממתין לתשלום",
+        "CONFIRMED": "מאושר",
+        "CANCELLED": "בוטל"
+      }
+    },
+    "stubCall": {
+      "title": "זהו חדר וידאו מדומה",
+      "description": "ספק שיחות וידאו אמיתי (זום/Google Meet) עדיין לא מחובר — עמוד זה מהווה מציין מקום לשיחה."
+    }
+  },
+  "instructor": {
+    "status": {
+      "DRAFT": "טיוטה",
+      "PENDING_REVIEW": "ממתין לאישור",
+      "PUBLISHED": "פורסם",
+      "REJECTED": "נדחה",
+      "ARCHIVED": "בארכיון"
+    },
+    "dashboard": {
+      "title": "ההוראה שלי",
+      "newCourse": "קורס חדש",
+      "create": "יצירת קורס",
+      "createError": "לא הצלחנו ליצור את הקורס. נסו שוב.",
+      "empty": "עדיין לא יצרת קורסים."
+    },
+    "editor": {
+      "titleLabel": "כותרת הקורס",
+      "descriptionLabel": "תיאור הקורס",
+      "rejectionReasonLabel": "סיבת הדחייה",
+      "readOnlyNotice": "לא ניתן לערוך קורס זה בזמן שהוא ממתין לאישור או מפורסם.",
+      "moduleTitleLabel": "כותרת מודול חדש",
+      "addModule": "הוספת מודול",
+      "deleteModule": "מחיקה",
+      "lessonTitleLabel": "כותרת השיעור",
+      "lessonContentLabel": "תוכן טקסטואלי של השיעור",
+      "addLesson": "הוספת שיעור טקסט",
+      "saveLesson": "שמירת שיעור",
+      "deleteLesson": "מחיקה",
+      "cancel": "ביטול",
+      "submitForReview": "שליחה לאישור",
+      "submitError": "לא הצלחנו לשלוח את הקורס. ודאו שיש בו לפחות שיעור אחד."
+    }
+  },
+  "admin": {
+    "queue": {
+      "title": "תור קורסים לאישור",
+      "empty": "אין קורסים שמחכים לאישור.",
+      "lessonsCount": "{{count}} שיעורים",
+      "approve": "אישור",
+      "reject": "דחייה",
+      "reasonPlaceholder": "נמקו מדוע הקורס נדחה…",
+      "confirmReject": "אישור דחייה"
+    }
+  },
+  "reviews": {
+    "title": "חוות דעת",
+    "average": "ממוצע {{rating}}",
+    "empty": "עדיין אין חוות דעת.",
+    "textPlaceholder": "שתפו את החוויה שלכם מהקורס…",
+    "submit": "שליחת חוות דעת",
+    "submitError": "לא הצלחנו לשלוח את חוות הדעת. נסו שוב."
   }
 }

@@ -35,6 +35,12 @@ model User {
   verificationTokens  VerificationToken[]
   coursesOwned        Course[]
   enrollments         Enrollment[]
+  orders              Order[]
+  attempts            Attempt[]
+  mentorAvailability  MentorAvailability[]
+  bookingsAsStudent   Booking[]            @relation("BookingStudent")
+  bookingsAsMentor    Booking[]            @relation("BookingMentor")
+  reviews             Review[]
 
   @@map("users")
 }
@@ -68,7 +74,9 @@ model VerificationToken {
 
 enum CourseStatus {
   DRAFT
+  PENDING_REVIEW
   PUBLISHED
+  REJECTED
   ARCHIVED
 }
 
@@ -93,12 +101,15 @@ model Course {
   ownerInstructorId         String
   ownerInstructor           User    @relation(fields: [ownerInstructorId], references: [id])
   instructorRevenueShareBps Int?
+  rejectionReason           String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   modules     Module[]
   enrollments Enrollment[]
+  orders      Order[]
+  reviews     Review[]
 
   @@index([status, category])
   @@map("courses")
@@ -139,6 +150,7 @@ model Lesson {
   updatedAt DateTime @updatedAt
 
   lessonProgress LessonProgress[]
+  quiz           Quiz?
 
   @@index([moduleId, order])
   @@map("lessons")
@@ -151,6 +163,7 @@ model Enrollment {
   courseId    String
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   purchaseId  String?   @unique
+  purchase    Order?    @relation(fields: [purchaseId], references: [id])
   progressPct Int       @default(0)
   completedAt DateTime?
   enrolledAt  DateTime  @default(now())
@@ -176,4 +189,177 @@ model LessonProgress {
   @@unique([enrollmentId, lessonId])
   @@index([lessonId])
   @@map("lesson_progress")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String?
+  course      Course?     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  bookingId   String?     @unique
+  booking     Booking?    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amountCents Int
+  currency    String
+  status      OrderStatus @default(PENDING)
+  provider    String
+  providerRef String?     @unique
+  invoiceUrl  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  enrollment Enrollment?
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  NUMERIC_ENTRY
+}
+
+model Quiz {
+  id           String   @id @default(uuid())
+  lessonId     String   @unique
+  lesson       Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  timeLimitSec Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  questions Question[]
+  attempts  Attempt[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id                   String       @id @default(uuid())
+  quizId               String
+  quiz                 Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  order                Int
+  text                 String       @db.Text
+  type                 QuestionType
+  options              String[]
+  correctOptionIndex   Int?
+  correctNumericAnswer String?
+  explanation          String?      @db.Text
+
+  answers AttemptAnswer[]
+
+  @@index([quizId, order])
+  @@map("questions")
+}
+
+model Attempt {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId      String
+  quiz        Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+  scorePct    Int?
+  isLate      Boolean   @default(false)
+
+  answers AttemptAnswer[]
+
+  @@index([userId, quizId])
+  @@index([quizId])
+  @@map("attempts")
+}
+
+model AttemptAnswer {
+  id                  String   @id @default(uuid())
+  attemptId           String
+  attempt             Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId          String
+  question             Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionIndex Int?
+  numericAnswer       String?
+  isCorrect           Boolean?
+  timeSpentSec        Int?
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@map("attempt_answers")
+}
+
+enum SlotStatus {
+  OPEN
+  BOOKED
+}
+
+model MentorAvailability {
+  id         String     @id @default(uuid())
+  mentorId   String
+  mentor     User       @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  startAt    DateTime
+  endAt      DateTime
+  priceCents Int
+  currency   String     @default("USD")
+  status     SlotStatus @default(OPEN)
+  createdAt  DateTime   @default(now())
+
+  bookings Booking[]
+
+  @@index([mentorId, startAt])
+  @@index([status, startAt])
+  @@map("mentor_availability")
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  studentId        String
+  student          User          @relation("BookingStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  mentorId         String
+  mentor           User          @relation("BookingMentor", fields: [mentorId], references: [id])
+  slotId           String
+  slot             MentorAvailability @relation(fields: [slotId], references: [id])
+  scheduledStartAt DateTime
+  scheduledEndAt   DateTime
+  amountCents      Int
+  currency         String
+  status           BookingStatus @default(PENDING_PAYMENT)
+  videoJoinUrl     String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  order Order?
+
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([slotId])
+  @@map("bookings")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  rating    Int
+  text      String   @db.Text
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([courseId, hidden])
+  @@map("reviews")
 }

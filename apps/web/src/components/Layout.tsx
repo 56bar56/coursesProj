@@ -18,14 +18,33 @@ export function Layout() {
           <Link to="/courses" className="text-gray-600 hover:text-gray-900">
             {t('nav.courses')}
           </Link>
+          <Link to="/mentors" className="text-gray-600 hover:text-gray-900">
+            {t('nav.mentors')}
+          </Link>
           {user && (
             <>
               <Link to="/my-courses" className="text-gray-600 hover:text-gray-900">
                 {t('nav.myCourses')}
               </Link>
+              <Link to="/bookings" className="text-gray-600 hover:text-gray-900">
+                {t('nav.bookings')}
+              </Link>
+              <Link to="/orders" className="text-gray-600 hover:text-gray-900">
+                {t('nav.orders')}
+              </Link>
               <Link to="/dashboard" className="text-gray-600 hover:text-gray-900">
                 {t('nav.dashboard')}
               </Link>
+              {user.roles.includes('INSTRUCTOR') && (
+                <Link to="/instructor/courses" className="text-gray-600 hover:text-gray-900">
+                  {t('nav.instructorCourses')}
+                </Link>
+              )}
+              {user.roles.includes('ADMIN') && (
+                <Link to="/admin/courses" className="text-gray-600 hover:text-gray-900">
+                  {t('nav.adminQueue')}
+                </Link>
+              )}
             </>
           )}
         </nav>

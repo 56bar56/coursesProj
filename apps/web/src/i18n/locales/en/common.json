@@ -3,7 +3,12 @@
     "home": "Home",
     "courses": "Courses",
     "myCourses": "My Courses",
+    "mentors": "Mentors",
+    "bookings": "Bookings",
+    "orders": "Orders",
     "dashboard": "Dashboard",
+    "instructorCourses": "My Teaching",
+    "adminQueue": "Review Queue",
     "login": "Log in",
     "register": "Sign up",
     "logout": "Log out"
@@ -57,7 +62,128 @@
       "enrollToUnlock": "Enroll in this course to unlock this lesson.",
       "enrollCta": "Go to course page",
       "quizComingSoon": "Quizzes are coming soon.",
-      "downloadResource": "Download"
+      "downloadResource": "Download",
+      "quiz": {
+        "questionCount": "{{count}} question",
+        "questionCount_other": "{{count}} questions",
+        "timeLimit": "Time limit: {{minutes}} minutes",
+        "start": "Start quiz",
+        "startError": "Could not start the quiz. Please try again.",
+        "submit": "Submit",
+        "timeRemaining": "Time remaining: {{time}}",
+        "pastAttempts": "Past attempts",
+        "score": "{{percent}}%",
+        "late": "late",
+        "lateSubmission": "This attempt was submitted after the time limit.",
+        "correct": "Correct",
+        "incorrect": "Incorrect",
+        "yourAnswer": "Your answer"
+      }
     }
+  },
+  "payments": {
+    "buyFor": "Buy for {{price}}",
+    "checkoutError": "Could not start checkout. Please try again.",
+    "checkout": {
+      "title": "Checkout",
+      "description": "This is a simulated checkout for local development — no real payment provider is connected yet.",
+      "simulateSuccess": "Simulate successful payment",
+      "simulateFailure": "Simulate failed payment",
+      "simulateError": "Could not process this order. Please try again."
+    },
+    "orders": {
+      "title": "Orders",
+      "empty": "You haven't purchased any courses yet.",
+      "status": {
+        "PENDING": "Pending",
+        "PAID": "Paid",
+        "FAILED": "Failed",
+        "CANCELLED": "Cancelled"
+      }
+    }
+  },
+  "bookings": {
+    "bookError": "Could not start checkout for this booking. Please try again.",
+    "slotUnavailable": "This slot is no longer available. Please pick another.",
+    "checkout": {
+      "title": "Consultation with {{mentorName}}"
+    },
+    "mentorList": {
+      "title": "Mentors",
+      "empty": "No mentors are available right now."
+    },
+    "availability": {
+      "title": "Book a consultation",
+      "empty": "This mentor has no open slots right now."
+    },
+    "history": {
+      "title": "Bookings",
+      "empty": "You haven't booked any consultations yet.",
+      "joinCall": "Join call",
+      "addToCalendar": "Add to calendar",
+      "cancel": "Cancel",
+      "status": {
+        "PENDING_PAYMENT": "Pending payment",
+        "CONFIRMED": "Confirmed",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "stubCall": {
+      "title": "This is a placeholder video room",
+      "description": "A real video call provider (Zoom/Google Meet) isn't connected yet — this page stands in for where the call would happen."
+    }
+  },
+  "instructor": {
+    "status": {
+      "DRAFT": "Draft",
+      "PENDING_REVIEW": "Pending review",
+      "PUBLISHED": "Published",
+      "REJECTED": "Rejected",
+      "ARCHIVED": "Archived"
+    },
+    "dashboard": {
+      "title": "My Teaching",
+      "newCourse": "New course",
+      "create": "Create course",
+      "createError": "Could not create the course. Please try again.",
+      "empty": "You haven't created any courses yet."
+    },
+    "editor": {
+      "titleLabel": "Course title",
+      "descriptionLabel": "Course description",
+      "rejectionReasonLabel": "Reason for rejection",
+      "readOnlyNotice": "This course can't be edited while it's pending review or published.",
+      "moduleTitleLabel": "New module title",
+      "addModule": "Add module",
+      "deleteModule": "Delete",
+      "lessonTitleLabel": "Lesson title",
+      "lessonContentLabel": "Lesson text content",
+      "addLesson": "Add text lesson",
+      "saveLesson": "Save lesson",
+      "deleteLesson": "Delete",
+      "cancel": "Cancel",
+      "submitForReview": "Submit for review",
+      "submitError": "Could not submit this course. Make sure it has at least one lesson."
+    }
+  },
+  "admin": {
+    "queue": {
+      "title": "Course review queue",
+      "empty": "No courses are waiting for review.",
+      "lessonsCount": "{{count}} lesson",
+      "lessonsCount_other": "{{count}} lessons",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reasonPlaceholder": "Explain why this course is being rejected…",
+      "confirmReject": "Confirm rejection"
+    }
+  },
+  "reviews": {
+    "title": "Reviews",
+    "average": "{{rating}} average",
+    "empty": "No reviews yet.",
+    "textPlaceholder": "Share your experience with this course…",
+    "submit": "Submit review",
+    "submitError": "Could not submit your review. Please try again."
   }
 }

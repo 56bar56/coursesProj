@@ -8,7 +8,7 @@ import { AppModule } from './app.module';
 import type { Env } from './config/env.schema';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const config = app.get(ConfigService<Env, true>);
 
   app.use(helmet());

@@ -64,7 +64,17 @@ export class LessonsService {
         };
       }
 
-      case 'QUIZ':
+      case 'QUIZ': {
+        const quiz = await this.prisma.quiz.findUnique({
+          where: { lessonId: lesson.id },
+          include: { _count: { select: { questions: true } } },
+        });
+        if (!quiz) {
+          return { ...base, comingSoon: true };
+        }
+        return { ...base, quizId: quiz.id, timeLimitSec: quiz.timeLimitSec, questionCount: quiz._count.questions };
+      }
+
       default:
         return { ...base, comingSoon: true };
     }

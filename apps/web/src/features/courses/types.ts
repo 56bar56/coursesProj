@@ -66,7 +66,8 @@ export type LessonContent =
       mimeType: string | null;
       sizeBytes: number | null;
     })
-  | (LessonBase & { type: 'QUIZ'; comingSoon: true });
+  | (LessonBase & { type: 'QUIZ'; comingSoon: true })
+  | (LessonBase & { type: 'QUIZ'; quizId: string; timeLimitSec: number | null; questionCount: number });
 
 export interface CourseProgress {
   progressPct: number;

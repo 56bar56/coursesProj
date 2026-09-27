@@ -30,9 +30,34 @@ export class MailService {
     await this.send(to, 'Reset your password', `<p>Reset your password:</p><p><a href="${link}">${link}</a></p>`);
   }
 
-  private async send(to: string, subject: string, html: string) {
+  async sendPurchaseReceiptEmail(to: string, courseTitle: string, amountCents: number, currency: string) {
+    const amount = (amountCents / 100).toFixed(2);
+    await this.send(
+      to,
+      'Your purchase receipt',
+      `<p>Thanks for your purchase! You now have access to <strong>${courseTitle}</strong>.</p>` +
+        `<p>Amount charged: ${amount} ${currency}</p>`,
+    );
+  }
+
+  async sendBookingConfirmationEmail(to: string, mentorName: string, startAt: Date, joinUrl: string, icsContent: string) {
+    await this.send(
+      to,
+      'Your consultation is confirmed',
+      `<p>Your consultation with <strong>${mentorName}</strong> is confirmed for ${startAt.toISOString()}.</p>` +
+        `<p><a href="${joinUrl}">${joinUrl}</a></p>`,
+      [{ filename: 'invite.ics', content: icsContent, contentType: 'text/calendar; method=REQUEST' }],
+    );
+  }
+
+  private async send(
+    to: string,
+    subject: string,
+    html: string,
+    attachments?: { filename: string; content: string; contentType: string }[],
+  ) {
     try {
-      await this.transporter.sendMail({ from: this.from, to, subject, html });
+      await this.transporter.sendMail({ from: this.from, to, subject, html, attachments });
     } catch (err) {
       this.logger.error(`Failed to send email to ${to}: ${(err as Error).message}`);
     }

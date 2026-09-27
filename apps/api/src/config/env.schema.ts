@@ -30,6 +30,14 @@ export const envSchema = z.object({
 
   PAYMENT_PROVIDER: z.enum(['fake']).default('fake'),
   PAYMENTS_FAKE_WEBHOOK_SECRET: z.string().min(16, 'PAYMENTS_FAKE_WEBHOOK_SECRET must be at least 16 characters'),
+
+  // Any OpenAI-compatible chat-completions API (Groq, Gemini, Ollama, ...).
+  // AI_API_KEY is optional so the app still boots without it (the AI endpoint
+  // returns 503 instead) and so keyless local providers like Ollama work.
+  AI_BASE_URL: z.url().default('https://api.groq.com/openai/v1'),
+  AI_API_KEY: z.string().optional(),
+  AI_MODEL: z.string().min(1).default('openai/gpt-oss-120b'),
+  AI_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;

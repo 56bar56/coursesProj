@@ -382,3 +382,9 @@ deliberately excluded from this pass. Real object storage for
 instructor-uploaded video/resources, video/quiz authoring UI, a real payment
 provider, and a real video-call provider all remain intentionally deferred
 until there's a concrete need driving each one.
+
+## License
+
+All rights reserved — see [`LICENSE`](./LICENSE). The source is visible for
+portfolio and tooling purposes, but no permission is granted to use, copy,
+modify, or distribute it.

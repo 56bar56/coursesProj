@@ -83,6 +83,19 @@
       }
     }
   },
+  "aiChat": {
+    "whyWrong": "Why was I wrong? Ask the AI tutor",
+    "hide": "Hide AI tutor",
+    "thinking": "Thinking…",
+    "placeholder": "Ask a follow-up question…",
+    "send": "Send",
+    "retry": "Try again",
+    "error": "The AI tutor couldn't answer right now.",
+    "rateLimited": "Too many questions in a short time. Wait a minute and try again.",
+    "notConfigured": "The AI tutor isn't set up on this server yet.",
+    "limitReached": "This conversation has reached its length limit.",
+    "disclaimer": "AI-generated explanations can contain mistakes."
+  },
   "payments": {
     "buyFor": "Buy for {{price}}",
     "checkoutError": "Could not start checkout. Please try again.",

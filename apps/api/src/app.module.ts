@@ -15,6 +15,7 @@ import { MentorsModule } from './mentors/mentors.module';
 import { InstructorCoursesModule } from './instructor-courses/instructor-courses.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
+import { AiChatModule } from './ai-chat/ai-chat.module';
 import { AppController } from './app.controller';
 import { validateEnv } from './config/env.schema';
 
@@ -39,6 +40,7 @@ import { validateEnv } from './config/env.schema';
     InstructorCoursesModule,
     ReviewsModule,
     AdminModule,
+    AiChatModule,
   ],
   controllers: [AppController],
 })

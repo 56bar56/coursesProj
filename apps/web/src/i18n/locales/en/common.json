@@ -34,13 +34,21 @@
     "invalidCredentials": "Invalid email or password.",
     "genericError": "Something went wrong. Please try again."
   },
+  "verifyEmail": {
+    "title": "Verify your email",
+    "pending": "Verifying…",
+    "success": "Your email is verified.",
+    "missingToken": "This verification link is missing its token.",
+    "toDashboard": "Go to your dashboard"
+  },
   "dashboard": {
     "welcome": "Welcome, {{name}}",
     "email": "Email",
     "roles": "Roles",
     "emailVerified": "Email verified",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "pendingRole": "Your {{role}} access will be activated once you verify your email. Check your inbox for the verification link."
   },
   "courses": {
     "catalogue": {

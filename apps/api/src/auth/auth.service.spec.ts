@@ -96,20 +96,28 @@ describe('AuthService', () => {
       expect(jwt.verify(result.accessToken, TEST_JWT_SECRET)).toMatchObject({ sub: baseUser.id, email: baseUser.email });
       expect(result.refreshToken).toBe('raw-refresh');
       expect(prisma.user.create.mock.calls[0][0].data.roles).toBeUndefined();
+      expect(prisma.user.create.mock.calls[0][0].data.pendingRole).toBeNull();
     });
 
     it.each([
       [SIGNUP_CODES.SIGNUP_CODE_INSTRUCTOR, Role.INSTRUCTOR],
       [SIGNUP_CODES.SIGNUP_CODE_MENTOR, Role.MENTOR],
       [SIGNUP_CODES.SIGNUP_CODE_ADMIN, Role.ADMIN],
-    ])('grants the role matching sign-up code %s', async (signupCode, role) => {
+    ])('holds the role for sign-up code %s as pending until verification', async (signupCode, role) => {
       const { service, prisma } = buildService({ userFound: null });
 
-      await service.register({ email: baseUser.email, password: 'password123', displayName: 'Staff', signupCode });
+      const result = await service.register({
+        email: baseUser.email,
+        password: 'password123',
+        displayName: 'Staff',
+        signupCode,
+      });
 
-      expect(prisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ roles: [role] }) }),
-      );
+      const { data } = prisma.user.create.mock.calls[0][0];
+      expect(data.pendingRole).toBe(role);
+      expect(data.roles).toBeUndefined();
+      // The token handed out before verification must not carry the staff role.
+      expect((jwt.verify(result.accessToken, TEST_JWT_SECRET) as { roles: Role[] }).roles).not.toContain(role);
     });
 
     it('rejects an invalid sign-up code without creating a user', async () => {
@@ -119,6 +127,31 @@ describe('AuthService', () => {
         service.register({ email: baseUser.email, password: 'password123', displayName: 'X', signupCode: 'wrong' }),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('grants the pending staff role once the email is verified', async () => {
+      const { service, prisma, verificationTokenService } = buildService();
+      verificationTokenService.consume.mockResolvedValue(baseUser.id);
+      prisma.user.findUnique.mockResolvedValue({ pendingRole: Role.ADMIN });
+
+      await service.verifyEmail('raw-verification');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: baseUser.id },
+        data: { emailVerified: true, roles: [Role.ADMIN], pendingRole: null },
+      });
+    });
+
+    it('only marks the email verified when no role is pending', async () => {
+      const { service, prisma, verificationTokenService } = buildService();
+      verificationTokenService.consume.mockResolvedValue(baseUser.id);
+      prisma.user.findUnique.mockResolvedValue({ pendingRole: null });
+
+      await service.verifyEmail('raw-verification');
+
+      expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: baseUser.id }, data: { emailVerified: true } });
     });
   });
 

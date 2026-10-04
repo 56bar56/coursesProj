@@ -285,7 +285,10 @@ the seed script, or a secret sign-up code: set `SIGNUP_CODE_INSTRUCTOR` /
 `SIGNUP_CODE_MENTOR` / `SIGNUP_CODE_ADMIN` in `apps/api/.env` (16+ chars
 each; unset disables that role) and whoever enters the matching code in the
 register page's optional "Staff sign-up code" field gets that role instead
-of `STUDENT`. A wrong code is rejected with 403 and no account is created.
+of `STUDENT` — but only after verifying their email (until then the role sits
+in `User.pendingRole` and they're a plain student). A wrong code is rejected
+with 403 and no account is created, and the API refuses to boot if two roles
+share the same code.
 `/admin/metrics` has a platform-wide numbers snapshot.
 
 The seed script also tries to download a small sample video for the seeded

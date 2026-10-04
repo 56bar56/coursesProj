@@ -51,6 +51,19 @@ export const envSchema = z.object({
   AI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().min(1).default('openai/gpt-oss-120b'),
   AI_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(10),
+}).superRefine((env, ctx) => {
+  // A code shared by two roles would silently grant whichever is checked first.
+  const codeKeys = ['SIGNUP_CODE_INSTRUCTOR', 'SIGNUP_CODE_MENTOR', 'SIGNUP_CODE_ADMIN'] as const;
+  const seen = new Map<string, string>();
+  for (const key of codeKeys) {
+    const code = env[key];
+    if (!code) continue;
+    const other = seen.get(code);
+    if (other) {
+      ctx.addIssue({ code: 'custom', path: [key], message: `${key} must differ from ${other}` });
+    }
+    seen.set(code, key);
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

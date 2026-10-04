@@ -7,6 +7,7 @@ import { DashboardPage } from './routes/DashboardPage';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
+import { VerifyEmailPage } from './features/auth/VerifyEmailPage';
 import { CourseCataloguePage } from './routes/CourseCataloguePage';
 import { CourseDetailPage } from './routes/CourseDetailPage';
 import { MyCoursesPage } from './routes/MyCoursesPage';
@@ -46,6 +47,7 @@ export function App() {
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="verify-email" element={<VerifyEmailPage />} />
           <Route path="courses" element={<CourseCataloguePage />} />
           <Route path="courses/:slug" element={<CourseDetailPage />} />
           <Route path="mentors" element={<MentorListPage />} />

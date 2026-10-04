@@ -34,13 +34,21 @@
     "invalidCredentials": "אימייל או סיסמה שגויים.",
     "genericError": "משהו השתבש. נסו שוב."
   },
+  "verifyEmail": {
+    "title": "אימות כתובת אימייל",
+    "pending": "מאמת…",
+    "success": "כתובת האימייל אומתה.",
+    "missingToken": "בקישור האימות חסר טוקן.",
+    "toDashboard": "מעבר ללוח הבקרה"
+  },
   "dashboard": {
     "welcome": "שלום, {{name}}",
     "email": "אימייל",
     "roles": "תפקידים",
     "emailVerified": "אימייל מאומת",
     "yes": "כן",
-    "no": "לא"
+    "no": "לא",
+    "pendingRole": "הגישה שלך כ-{{role}} תופעל לאחר אימות כתובת האימייל. בדקו את תיבת הדואר לקישור האימות."
   },
   "courses": {
     "catalogue": {

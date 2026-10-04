@@ -73,7 +73,8 @@ export class AuthService {
         email: dto.email,
         passwordHash,
         displayName: dto.displayName,
-        ...(signupRole && { roles: [signupRole] }),
+        // Staff access waits for email verification; until then the user is a STUDENT.
+        pendingRole: signupRole,
       },
     });
 
@@ -134,7 +135,14 @@ export class AuthService {
 
   async verifyEmail(rawToken: string): Promise<void> {
     const userId = await this.verificationTokenService.consume(rawToken, VerificationTokenType.EMAIL_VERIFY);
-    await this.prisma.user.update({ where: { id: userId }, data: { emailVerified: true } });
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { pendingRole: true } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerified: true,
+        ...(user?.pendingRole && { roles: [user.pendingRole], pendingRole: null }),
+      },
+    });
   }
 
   async forgotPassword(email: string): Promise<void> {

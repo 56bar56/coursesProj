@@ -39,6 +39,19 @@ export function useRegister() {
   });
 }
 
+export function useVerifyEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      await apiRequest('/auth/verify-email', { method: 'POST', body: { token } });
+      // Verification may have granted a pending staff role; refresh the session
+      // so the access token carries it. Fails harmlessly when logged out.
+      await apiRequest('/auth/refresh', { method: 'POST' }).catch(() => undefined);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY }),
+  });
+}
+
 export function useLogout() {
   const queryClient = useQueryClient();
   return useMutation({

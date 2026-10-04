@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -13,4 +13,10 @@ export class RegisterDto {
   @MinLength(1)
   @MaxLength(100)
   displayName!: string;
+
+  // Secret code that grants INSTRUCTOR / MENTOR / ADMIN instead of STUDENT.
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  signupCode?: string;
 }

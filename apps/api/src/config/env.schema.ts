@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// An empty value (e.g. `SIGNUP_CODE_ADMIN=""`) counts as unset.
+const optionalSecret = (name: string) =>
+  z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(16, `${name} must be at least 16 characters`).optional(),
+  );
+
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
@@ -23,6 +30,12 @@ export const envSchema = z.object({
   SEED_INSTRUCTOR_PASSWORD: z.string().min(8).optional(),
   SEED_MENTOR_EMAIL: z.email().optional(),
   SEED_MENTOR_PASSWORD: z.string().min(8).optional(),
+
+  // Secret sign-up codes: registering with one of these grants that role
+  // instead of STUDENT. Leave unset to disable self-service for that role.
+  SIGNUP_CODE_INSTRUCTOR: optionalSecret('SIGNUP_CODE_INSTRUCTOR'),
+  SIGNUP_CODE_MENTOR: optionalSecret('SIGNUP_CODE_MENTOR'),
+  SIGNUP_CODE_ADMIN: optionalSecret('SIGNUP_CODE_ADMIN'),
 
   STORAGE_SIGNING_SECRET: z.string().min(16, 'STORAGE_SIGNING_SECRET must be at least 16 characters'),
   LOCAL_STORAGE_DIR: z.string().min(1).default('./local-uploads'),

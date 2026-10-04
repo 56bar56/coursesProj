@@ -1,4 +1,5 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { createHash, timingSafeEqual } from 'node:crypto';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,7 +8,7 @@ import { MailService } from '../mail/mail.service';
 import { PasswordService } from './password.service';
 import { RefreshTokenService } from './refresh-token.service';
 import { VerificationTokenService } from './verification-token.service';
-import { VerificationTokenType, type Role } from '../generated/prisma/enums';
+import { Role, VerificationTokenType } from '../generated/prisma/enums';
 import type { RegisterDto } from './dto/register.dto';
 import type { LoginDto } from './dto/login.dto';
 import type { AccessTokenPayload } from './types';
@@ -37,7 +38,30 @@ export class AuthService {
     return jwt.sign(payload, secret, { expiresIn: `${ttlMin}m` });
   }
 
+  /**
+   * Maps a secret sign-up code to the role it grants. Codes are compared via
+   * fixed-length SHA-256 digests so the comparison is constant-time.
+   */
+  private resolveSignupRole(code: string): Role {
+    const candidates: [Role, string | undefined][] = [
+      [Role.INSTRUCTOR, this.config.get('SIGNUP_CODE_INSTRUCTOR', { infer: true })],
+      [Role.MENTOR, this.config.get('SIGNUP_CODE_MENTOR', { infer: true })],
+      [Role.ADMIN, this.config.get('SIGNUP_CODE_ADMIN', { infer: true })],
+    ];
+    const digest = (value: string) => createHash('sha256').update(value).digest();
+    const provided = digest(code);
+    for (const [role, secret] of candidates) {
+      if (secret && timingSafeEqual(provided, digest(secret))) {
+        return role;
+      }
+    }
+    throw new ForbiddenException('Invalid sign-up code');
+  }
+
   async register(dto: RegisterDto): Promise<AuthResult> {
+    // Validate the code before anything else so a bad code never creates a user.
+    const signupRole = dto.signupCode ? this.resolveSignupRole(dto.signupCode) : null;
+
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) {
       throw new ConflictException('An account with this email already exists');
@@ -49,6 +73,7 @@ export class AuthService {
         email: dto.email,
         passwordHash,
         displayName: dto.displayName,
+        ...(signupRole && { roles: [signupRole] }),
       },
     });
 

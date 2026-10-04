@@ -1,9 +1,14 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import jwt from 'jsonwebtoken';
 import { AuthService } from './auth.service';
 import { Role } from '../generated/prisma/enums';
 
 const TEST_JWT_SECRET = 'test-secret-at-least-16-chars';
+const SIGNUP_CODES: Record<string, string> = {
+  SIGNUP_CODE_INSTRUCTOR: 'instructor-code-1234567',
+  SIGNUP_CODE_MENTOR: 'mentor-code-1234567890',
+  SIGNUP_CODE_ADMIN: 'admin-code-12345678901',
+};
 
 describe('AuthService', () => {
   const baseUser = {
@@ -28,6 +33,7 @@ describe('AuthService', () => {
       get: jest.fn((key: string) => {
         if (key === 'JWT_ACCESS_SECRET') return TEST_JWT_SECRET;
         if (key === 'ACCESS_TOKEN_TTL_MIN') return 15;
+        if (key in SIGNUP_CODES) return SIGNUP_CODES[key];
         throw new Error(`Unexpected config key in test: ${key}`);
       }),
     };
@@ -89,6 +95,30 @@ describe('AuthService', () => {
       expect(refreshTokenService.issue).toHaveBeenCalledWith(baseUser.id);
       expect(jwt.verify(result.accessToken, TEST_JWT_SECRET)).toMatchObject({ sub: baseUser.id, email: baseUser.email });
       expect(result.refreshToken).toBe('raw-refresh');
+      expect(prisma.user.create.mock.calls[0][0].data.roles).toBeUndefined();
+    });
+
+    it.each([
+      [SIGNUP_CODES.SIGNUP_CODE_INSTRUCTOR, Role.INSTRUCTOR],
+      [SIGNUP_CODES.SIGNUP_CODE_MENTOR, Role.MENTOR],
+      [SIGNUP_CODES.SIGNUP_CODE_ADMIN, Role.ADMIN],
+    ])('grants the role matching sign-up code %s', async (signupCode, role) => {
+      const { service, prisma } = buildService({ userFound: null });
+
+      await service.register({ email: baseUser.email, password: 'password123', displayName: 'Staff', signupCode });
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ roles: [role] }) }),
+      );
+    });
+
+    it('rejects an invalid sign-up code without creating a user', async () => {
+      const { service, prisma } = buildService({ userFound: null });
+
+      await expect(
+        service.register({ email: baseUser.email, password: 'password123', displayName: 'X', signupCode: 'wrong' }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
   });
 

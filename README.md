@@ -279,9 +279,13 @@ flow. `SEED_MENTOR_EMAIL`/`SEED_MENTOR_PASSWORD` (default
 by any user. Log in as the seeded instructor to try the real authoring flow
 at `/instructor/courses` (create a course, add a module + text lesson,
 submit for review), then as the seeded admin to approve/reject it at
-`/admin/courses`. `Role.INSTRUCTOR`/`Role.ADMIN` are never self-service —
-they're only granted via the admin `PATCH /api/users/:id/roles` endpoint,
-now with a UI at `/admin/users` (or the seed script), same as `Role.MENTOR`.
+`/admin/courses`. `Role.INSTRUCTOR`/`Role.MENTOR`/`Role.ADMIN` are granted
+via the admin `PATCH /api/users/:id/roles` endpoint (UI at `/admin/users`),
+the seed script, or a secret sign-up code: set `SIGNUP_CODE_INSTRUCTOR` /
+`SIGNUP_CODE_MENTOR` / `SIGNUP_CODE_ADMIN` in `apps/api/.env` (16+ chars
+each; unset disables that role) and whoever enters the matching code in the
+register page's optional "Staff sign-up code" field gets that role instead
+of `STUDENT`. A wrong code is rejected with 403 and no account is created.
 `/admin/metrics` has a platform-wide numbers snapshot.
 
 The seed script also tries to download a small sample video for the seeded

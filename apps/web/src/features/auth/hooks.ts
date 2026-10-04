@@ -31,7 +31,7 @@ export function useLogin() {
 export function useRegister() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { email: string; password: string; displayName: string }) =>
+    mutationFn: (input: { email: string; password: string; displayName: string; signupCode?: string }) =>
       apiRequest<{ user: User }>('/auth/register', { method: 'POST', body: input }),
     onSuccess: (data) => {
       queryClient.setQueryData(ME_QUERY_KEY, data.user);

@@ -27,6 +27,8 @@
     "registerTitle": "יצירת חשבון",
     "loginSubmit": "התחברות",
     "registerSubmit": "הרשמה",
+    "signupCodeLabel": "קוד הרשמה לצוות (אופציונלי)",
+    "signupCodeHint": "רק למרצים, מנטורים ומנהלים. השאירו ריק כדי להירשם כסטודנט.",
     "noAccount": "אין לך חשבון?",
     "haveAccount": "כבר יש לך חשבון?",
     "invalidCredentials": "אימייל או סיסמה שגויים.",

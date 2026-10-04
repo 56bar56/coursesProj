@@ -27,6 +27,8 @@
     "registerTitle": "Create an account",
     "loginSubmit": "Log in",
     "registerSubmit": "Sign up",
+    "signupCodeLabel": "Staff sign-up code (optional)",
+    "signupCodeHint": "Only for instructors, mentors and admins. Leave empty to sign up as a student.",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "invalidCredentials": "Invalid email or password.",

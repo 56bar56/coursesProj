@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// An empty value (e.g. `SIGNUP_CODE_ADMIN=""`) counts as unset.
+const optionalSecret = (name: string) =>
+  z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(16, `${name} must be at least 16 characters`).optional(),
+  );
+
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
@@ -24,6 +31,12 @@ export const envSchema = z.object({
   SEED_MENTOR_EMAIL: z.email().optional(),
   SEED_MENTOR_PASSWORD: z.string().min(8).optional(),
 
+  // Secret sign-up codes: registering with one of these grants that role
+  // instead of STUDENT. Leave unset to disable self-service for that role.
+  SIGNUP_CODE_INSTRUCTOR: optionalSecret('SIGNUP_CODE_INSTRUCTOR'),
+  SIGNUP_CODE_MENTOR: optionalSecret('SIGNUP_CODE_MENTOR'),
+  SIGNUP_CODE_ADMIN: optionalSecret('SIGNUP_CODE_ADMIN'),
+
   STORAGE_SIGNING_SECRET: z.string().min(16, 'STORAGE_SIGNING_SECRET must be at least 16 characters'),
   LOCAL_STORAGE_DIR: z.string().min(1).default('./local-uploads'),
   SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(900),
@@ -38,6 +51,19 @@ export const envSchema = z.object({
   AI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().min(1).default('openai/gpt-oss-120b'),
   AI_RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(10),
+}).superRefine((env, ctx) => {
+  // A code shared by two roles would silently grant whichever is checked first.
+  const codeKeys = ['SIGNUP_CODE_INSTRUCTOR', 'SIGNUP_CODE_MENTOR', 'SIGNUP_CODE_ADMIN'] as const;
+  const seen = new Map<string, string>();
+  for (const key of codeKeys) {
+    const code = env[key];
+    if (!code) continue;
+    const other = seen.get(code);
+    if (other) {
+      ctx.addIssue({ code: 'custom', path: [key], message: `${key} must differ from ${other}` });
+    }
+    seen.set(code, key);
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

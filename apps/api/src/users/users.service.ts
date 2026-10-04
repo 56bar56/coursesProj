@@ -10,6 +10,7 @@ const PUBLIC_USER_SELECT = {
   locale: true,
   roles: true,
   emailVerified: true,
+  pendingRole: true,
   createdAt: true,
 } as const;
 

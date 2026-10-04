@@ -31,11 +31,24 @@ export function useLogin() {
 export function useRegister() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { email: string; password: string; displayName: string }) =>
+    mutationFn: (input: { email: string; password: string; displayName: string; signupCode?: string }) =>
       apiRequest<{ user: User }>('/auth/register', { method: 'POST', body: input }),
     onSuccess: (data) => {
       queryClient.setQueryData(ME_QUERY_KEY, data.user);
     },
+  });
+}
+
+export function useVerifyEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (token: string) => {
+      await apiRequest('/auth/verify-email', { method: 'POST', body: { token } });
+      // Verification may have granted a pending staff role; refresh the session
+      // so the access token carries it. Fails harmlessly when logged out.
+      await apiRequest('/auth/refresh', { method: 'POST' }).catch(() => undefined);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY }),
   });
 }
 

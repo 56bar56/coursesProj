@@ -11,13 +11,14 @@ export function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [signupCode, setSignupCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     register.mutate(
-      { email, password, displayName },
+      { email, password, displayName, signupCode: signupCode.trim() || undefined },
       {
         onSuccess: () => navigate('/dashboard'),
         onError: (err) => {
@@ -65,6 +66,17 @@ export function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="rounded-md border border-gray-300 px-3 py-2"
           />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-gray-600">{t('auth.signupCodeLabel')}</span>
+          <input
+            type="password"
+            autoComplete="off"
+            value={signupCode}
+            onChange={(e) => setSignupCode(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2"
+          />
+          <span className="text-xs text-gray-500">{t('auth.signupCodeHint')}</span>
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button

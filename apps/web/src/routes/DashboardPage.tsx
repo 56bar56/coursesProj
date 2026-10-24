@@ -25,6 +25,11 @@ export function DashboardPage() {
           <dt className="text-gray-500">{t('dashboard.emailVerified')}</dt>
           <dd>{user.emailVerified ? t('dashboard.yes') : t('dashboard.no')}</dd>
         </div>
+        {user.pendingRole && (
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-800">
+            {t('dashboard.pendingRole', { role: user.pendingRole })}
+          </p>
+        )}
       </dl>
     </div>
   );

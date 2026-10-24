@@ -7,5 +7,7 @@ export interface User {
   locale: string;
   roles: Role[];
   emailVerified: boolean;
+  // Staff role from a sign-up code, granted once the email is verified.
+  pendingRole: Role | null;
   createdAt: string;
 }
